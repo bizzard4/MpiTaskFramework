@@ -1,6 +1,7 @@
 # MpiTaskFramework
 MPI task framework is an experimental concurrency model using message passing and tasks only. The goal is to think "concurrent-first" when designing your software. The basic concep of this method is to design using task and messages.
-A task is non-blocking and can spawn other tasks. Data is shared among tasks using message. This force the user to think more about the data that would be share.
+A task is non-blocking and can spawn other tasks. Data is shared among tasks using message. This force the user to think more about the data that would be share. This is experimental because it doesn't suit Java programming language. Ack
+system like this would need his own programming language that include tasking and messaging like classes.
 
 # MPI
 Message-passing interface is a common way to communicate between threads, process and nodes.
@@ -13,6 +14,6 @@ The goal of this framework is to show how good concurrent practices can lead to 
 
 # Samples
 Implementation example : 
-1) Producer consumer (TODO)
-2) Samplesort algorithm (TODO)
-3) Request Ack Response Ack (TODO)
+1) Producer consumer (TODO) 
+2) Samplesort algorithm (TODO) 
+3) Request Ack Response Ack (TODO) 
