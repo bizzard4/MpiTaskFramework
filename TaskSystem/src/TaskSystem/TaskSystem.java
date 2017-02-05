@@ -24,6 +24,7 @@ public class TaskSystem {
 	 * We use a concurrent queue. The best would be to have a lock-free queue.
 	 * Current maximum is 1000, but this system could be extended to a more generic one.
 	 */
+	@SuppressWarnings("unchecked")
 	private ConcurrentLinkedQueue<Message>[] m_queues = new ConcurrentLinkedQueue[1000];
 	
 	// System is a singleton, but that may not be a proper way of doing it.

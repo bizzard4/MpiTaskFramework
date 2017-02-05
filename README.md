@@ -21,4 +21,4 @@ Implementation example :
 
 2) Samplesort algorithm (TODO) 
 
-3) Request Ack Response Ack (TODO) 
+3) Request Ack Response Ack 

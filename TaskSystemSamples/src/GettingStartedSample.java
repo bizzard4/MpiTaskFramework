@@ -92,9 +92,9 @@ public class GettingStartedSample {
 		public void receive() {
 			// Loop until we get a new message. This is equivalent to a blocking call. Later this task
 			// could be put to sleep until a new message arrive.
-			int tag = TaskSystem.getInstance().getNextTaskId();
+			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
 			while (tag == -1) {
-				tag = TaskSystem.getInstance().getNextTaskId();
+				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
 			}
 			
 			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
