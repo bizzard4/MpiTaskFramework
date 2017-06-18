@@ -1,14 +1,16 @@
-import TaskSystem.Message;
-import TaskSystem.Task;
-import TaskSystem.TaskSystem;
-import TaskSystem.Messages.IntMessage;
+package com.mpitaskframework.TaskSystemExamples;
+
+import com.mpitaskframework.TaskSystem.Message;
+import com.mpitaskframework.TaskSystem.Task;
+import com.mpitaskframework.TaskSystem.TaskSystem;
+import com.mpitaskframework.TaskSystem.Messages.IntMessage;
 
 /**
  * In this sample, I will show how to create a task, a new message type and how to send messages between task.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
-public class GettingStartedSample {
+public class GettingStarted {
 
 	/**
 	 * Simple task A. 
@@ -115,7 +117,7 @@ public class GettingStartedSample {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		GettingStartedSample sample = new GettingStartedSample();
+		GettingStarted sample = new GettingStarted();
 		
 		// Start the main task
 		Task.createTask(sample.new A());	

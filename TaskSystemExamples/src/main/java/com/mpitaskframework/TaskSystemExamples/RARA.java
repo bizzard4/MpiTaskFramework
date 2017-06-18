@@ -1,13 +1,15 @@
-import TaskSystem.Message;
-import TaskSystem.Task;
-import TaskSystem.TaskSystem;
+package com.mpitaskframework.TaskSystemExamples;
+
+import com.mpitaskframework.TaskSystem.Message;
+import com.mpitaskframework.TaskSystem.Task;
+import com.mpitaskframework.TaskSystem.TaskSystem;
 
 /**
  * Request Ack Response Ack is a common message format.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
-public class RARASample {
+public class RARA {
 	
 	/**
 	 * This sample will show how to implement a very useful request acknowledge response acknowledge (RARA) 
@@ -15,7 +17,7 @@ public class RARASample {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		RARASample sample = new RARASample();
+		RARA sample = new RARA();
 		
 		Task.createTask(sample.new RequestTask()); // Create the main task
 	}

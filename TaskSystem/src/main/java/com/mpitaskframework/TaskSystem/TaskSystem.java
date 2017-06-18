@@ -1,11 +1,11 @@
-package TaskSystem;
+package com.mpitaskframework.TaskSystem;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * System class is a central point where message queues are kept. Every method can be call from any task, this
  * class need to be lock-free and thread-safe. One mutex is used for the incrementing task id.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
 public class TaskSystem {

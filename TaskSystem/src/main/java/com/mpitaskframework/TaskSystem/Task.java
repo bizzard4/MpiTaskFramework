@@ -1,8 +1,8 @@
-package TaskSystem;
+package com.mpitaskframework.TaskSystem;
 
 /**
  * An abstract task. A task is a small process (a thread in this case) that can send and receive messages.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
 public abstract class Task implements Runnable {
@@ -73,3 +73,4 @@ public abstract class Task implements Runnable {
 	
 	
 }
+

@@ -1,8 +1,8 @@
-package TaskSystem;
+package com.mpitaskframework.TaskSystem;
 
 /**
  * Abstract message class.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
 public abstract class Message {

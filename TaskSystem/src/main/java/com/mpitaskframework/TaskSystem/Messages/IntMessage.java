@@ -1,10 +1,10 @@
-package TaskSystem.Messages;
+package com.mpitaskframework.TaskSystem.Messages;
 
-import TaskSystem.Message;
+import com.mpitaskframework.TaskSystem.Message;
 
 /**
  * A basic message containing an integer.
- * @author bizzard4
+ * @author François Gingras <bizzard4>
  *
  */
 public class IntMessage extends Message {
