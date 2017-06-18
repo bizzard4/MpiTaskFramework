@@ -8,6 +8,9 @@ Message-passing interface is a common way to communicate between threads, proces
 # Task
 Task is a basic executable process. In this case, each task will be a thread. A task communicate only using messages.
 
+# Scalability
+One goal of this framework is to have deisgn reflex that favor scalability. The framework should work transparently for intra-thread, IPC and network.
+
 # Design method
 The goal of this framework is to show how good concurrent practices can lead to a more scalable software. At design phase, each software fuctionality must be seen as a task and communication between done using messages.
 
@@ -18,4 +21,4 @@ Implementation example :
 
 2) Samplesort algorithm (TODO) 
 
-3) Echo server with n clients (TODO)  
+3) Echo server with n clients
