@@ -71,6 +71,28 @@ public abstract class Task implements Runnable {
 		TaskSystem.getInstance().send(pMsg, pTaskId);
 	}
 	
+	/**
+	 * Wrapper for immediate strategy.
+	 * @return
+	 */
+	protected boolean message_immediate() {
+		return TaskSystem.getInstance().message_immediate(this.getTaskId());
+	}
+	
+	/**
+	 * Wrapper for notify strategy.
+	 */
+	protected void message_notify() {
+		TaskSystem.getInstance().message_notify(this.getTaskId());
+	}
+	
+	/**
+	 * Wrapper for wait strategy.
+	 */
+	protected void message_wait() {
+		TaskSystem.getInstance().message_wait(this.getTaskId());
+	}
+	
 	
 }
 
