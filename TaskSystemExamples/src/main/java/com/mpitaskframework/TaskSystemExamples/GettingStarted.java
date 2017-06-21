@@ -29,6 +29,8 @@ public class GettingStarted {
 		 */
 		@Override
 		public void start() {
+			System.out.format("Task A create with Id=%d\n", this.getTaskId());
+			
 			// Create a task B, never use reference to the task. This is part of the good practices
 			// for task system.
 			int b_id = Task.createTask(new B());
@@ -82,6 +84,8 @@ public class GettingStarted {
 
 		@Override
 		public void start() {
+			System.out.format("Task B create with Id=%d\n", this.getTaskId());
+			
 			// Wait on a message
 			receive();
 			
@@ -115,12 +119,20 @@ public class GettingStarted {
 	/**
 	 * Sample showing creating task and sending messages.
 	 * @param args
+	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		GettingStarted sample = new GettingStarted();
 		
+		TaskSystem.activateSystem(true);
+		
 		// Start the main task
-		Task.createTask(sample.new A());	
+		Task.createTask(sample.new A());
+		
+		// 1s sleep until everything is done.
+		Thread.sleep(1000);
+		
+		TaskSystem.getInstance().destroy();
 	}
 
 }

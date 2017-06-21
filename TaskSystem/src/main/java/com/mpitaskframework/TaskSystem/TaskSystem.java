@@ -1,5 +1,6 @@
 package com.mpitaskframework.TaskSystem;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -19,24 +20,20 @@ public class TaskSystem implements Runnable {
 	public static final int MAX_TASK_COUNT = 1000;
 	
 	/**
-	 * Mutex for next task id. Only mutex in all the system. This would need a lock-free solution.
+	 * Shared system location.
 	 */
-	private final Object mutex = new Object();
+	public static final String SYSTEM_SHARED_PATH = "/tmp/TS_SYSTEM";
 	
 	/**
-	 * For task id increase.
-	 */
-	private int m_nextTaskId;
-	
-	/**
-	 * Reference to wait and signal thread.
+	 * Reference to wait and signal thread. Will be null if this process is not
+	 * the system creator.
 	 */
 	private Thread m_threadRef;
 	
 	/**
-	 * Shutdown signal. Set to true to shutdown the wait and signal loop.
+	 * Link to data in shared space.
 	 */
-	private boolean m_shutdownSignal;
+	private SharedSystemData m_sharedData;
 	
 	/**
 	 * We use a concurrent queue. The best would be to have a lock-free queue.
@@ -52,23 +49,57 @@ public class TaskSystem implements Runnable {
 	final Condition[] sleepers = new Condition[MAX_TASK_COUNT];
 	
 	
-	// System is a singleton, but that may not be a proper way of doing it.
+	/**
+	 * The system is unique process wide. But in the case of IPC, it will need to be
+	 * acquired instead of created.
+	 */
 	private static TaskSystem instance = null;
+	
+	/**
+	 * Prepare and activate the system. Can be created or acquire depending on the context.
+	 * @param create True to create the system.
+	 */
+	public static void activateSystem(boolean create) {
+		if (instance != null) {
+			System.err.println("Errir, system already activated");
+			System.exit(-1);
+		}
+		
+		// Create the object.
+		instance = new TaskSystem();
+		
+		if (create) {
+			try {
+				instance.createSystem();
+			} catch (IOException | ClassNotFoundException e) {
+				System.err.println("Error, " + e.getMessage());
+				e.printStackTrace();
+				System.exit(-1);
+			}
+		} else {
+			instance.acquireSystem();
+		}
+	}
+	
+	/**
+	 * This is not the best solution, but the one I will use for now. The system need to be prepared
+	 * before used. It is an unique instance across all process.
+	 * @return The system is initialized.
+	 */
 	public static TaskSystem getInstance() {
 		if (instance==null) {
-			instance = new TaskSystem();
-			instance.initialize();
+			System.err.print("Error, system is not initialized");
+			System.exit(-1);
 		}
 		
 		return instance;
 	}
 	
 	/**
-	 * Constructor.
+	 * Constructor. Put default values.
 	 */
 	private TaskSystem() {
-		m_nextTaskId = 0;
-		m_shutdownSignal = false;
+		m_sharedData = null;
 		
 		for (int i = 0; i < MAX_TASK_COUNT; i++) {
 			sleepers[i] = sleeper_lock.newCondition();
@@ -76,20 +107,32 @@ public class TaskSystem implements Runnable {
 	}
 	
 	/**
-	 * Prepare a new instance of the task system.
+	 * Prepare a new instance of the system within a shared space.
 	 * @return
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
 	 */
-	private void initialize() {
+	private void createSystem() throws IOException, ClassNotFoundException {
+		// Create and initialize shared data
+		m_sharedData = new SharedSystemData(SYSTEM_SHARED_PATH, true);
+		
 		// Start he wait and signal loop
 		m_threadRef = new Thread(this);
 		m_threadRef.start();
 	}
 	
 	/**
+	 * Acquire an existing instance of the system from the shared space.
+	 */
+	private void acquireSystem() {
+		
+	}
+	
+	/**
 	 * Signal system for a clean exit.
 	 */
 	public void destroy() {
-		m_shutdownSignal = true;
+		m_sharedData.setShutdownSignal(true);
 		
 		try {
 			m_threadRef.join();
@@ -107,6 +150,11 @@ public class TaskSystem implements Runnable {
 	 */
 	public void send(Message pMsg, int pTaskId) {
 		Message clone = pMsg.clone();
+		
+		if (m_queues[pTaskId] == null) {
+			// Need to acquire
+		}
+		
 		m_queues[pTaskId].offer(clone);
 	}
 	
@@ -154,10 +202,7 @@ public class TaskSystem implements Runnable {
 	 * @return
 	 */
 	public int getNextTaskId() {
-		synchronized(mutex) {
-			m_nextTaskId++;
-		}
-		return m_nextTaskId;
+		return m_sharedData.incrementNextTaskId();
 	}
 	
 	/**
@@ -200,13 +245,10 @@ public class TaskSystem implements Runnable {
 	public void run() {
 		System.out.println("Wait and signal loop started");
 		
-		while(!this.m_shutdownSignal) {
+		while(!m_sharedData.getShutdownSignal()) {
 			
 			// Signal each task with mesage waiting
-			int current_max_id;
-			synchronized(mutex) {
-				current_max_id = this.m_nextTaskId;
-			}
+			int current_max_id = m_sharedData.getNextTaskId();
 			
 			for (int i = 0; i < current_max_id; i++) {
 				if ((m_queues[i] != null) && (!m_queues[i].isEmpty())) {

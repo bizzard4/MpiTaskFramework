@@ -17,15 +17,16 @@ public class LocalRepReq {
 	 * back to the client.
 	 */
 	public static void main(String[] args) {
-		LocalRepReq sample = new LocalRepReq();
-		
-		int server_id = Task.createTask(sample.new ServerTask());
-
 		if (args.length != 1) {
 			System.out.println("Missing program argument : number of client");
 			System.exit(-1);
 		}
 		
+		LocalRepReq sample = new LocalRepReq();
+		
+		TaskSystem.activateSystem(true);
+		
+		int server_id = Task.createTask(sample.new ServerTask());
 		int nb_client = Integer.parseInt(args[0]);
 		for (int i = 0; i < nb_client; i++) {
 			Task.createTask(sample.new ClientTask(server_id));
