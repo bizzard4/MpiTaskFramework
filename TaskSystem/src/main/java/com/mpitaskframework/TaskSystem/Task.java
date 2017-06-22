@@ -7,6 +7,9 @@ package com.mpitaskframework.TaskSystem;
  */
 public abstract class Task implements Runnable {
 	
+	/**
+	 * Unique task id.
+	 */
 	private int m_taskId;
 	
 	/**
@@ -69,6 +72,18 @@ public abstract class Task implements Runnable {
 	 */
 	protected void send(Message pMsg, int pTaskId) {
 		TaskSystem.getInstance().send(pMsg, pTaskId);
+	}
+	
+	/**
+	 * This method loop and wait for the next message.
+	 * @return
+	 */
+	protected Message getNextMessage() {
+		Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+		while (msg == null) {
+			msg = TaskSystem.getInstance().receive(this.getTaskId());
+		}
+		return msg;
 	}
 	
 	/**

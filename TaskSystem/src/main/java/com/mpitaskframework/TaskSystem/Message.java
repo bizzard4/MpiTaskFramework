@@ -1,5 +1,10 @@
 package com.mpitaskframework.TaskSystem;
 
+import com.mpitaskframework.TaskSystem.Messages.IntMessage;
+
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+
 /**
  * Abstract message class.
  * @author François Gingras <bizzard4>
@@ -13,9 +18,15 @@ public abstract class Message {
 	private int m_tag;
 	
 	/**
-	 * Message are clone at each send.
+	 * Unique ID identifying the concrete message.
 	 */
-	public abstract Message clone();
+	private int m_tid;
+	
+	/**
+	 * Message self-write itself into the queue.
+	 * @param appender Appender to write on.
+	 */
+	public abstract void append(ExcerptAppender appender);
 	
 	/**
 	 * Get the tag.
@@ -26,10 +37,19 @@ public abstract class Message {
 	}
 	
 	/**
+	 * Get the unique tid.
+	 * @return Tid.
+	 */
+	public int getTid() {
+		return m_tid;
+	}
+	
+	/**
 	 * Constructor. Need a tag.
 	 * @param pTag Tag id.
 	 */
-	protected Message(int pTag) {
+	protected Message(int pTag, int pTid) {
 		m_tag = pTag;
+		m_tid = pTid;
 	}
 }

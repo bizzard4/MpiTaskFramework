@@ -77,12 +77,7 @@ public class LocalRepReq {
 		@Override
 		public void receive() {
 			// Loop until we get a new message.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (ReqResMessages.values()[msg.getTag()]) {
 			case REQUEST_MSG:
@@ -147,12 +142,7 @@ public class LocalRepReq {
 		@Override
 		public void receive() {
 			// Loop until we get a new message.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (ReqResMessages.values()[msg.getTag()]) {
 			case RESPONSE_MSG:

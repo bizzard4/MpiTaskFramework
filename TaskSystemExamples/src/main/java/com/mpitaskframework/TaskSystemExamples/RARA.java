@@ -4,6 +4,9 @@ import com.mpitaskframework.TaskSystem.Message;
 import com.mpitaskframework.TaskSystem.Task;
 import com.mpitaskframework.TaskSystem.TaskSystem;
 
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+
 /**
  * Request Ack Response Ack is a common message format.
  * @author François Gingras <bizzard4>
@@ -184,7 +187,7 @@ public class RARA {
 		public int responseToId;
 
 		protected SumRequest(int pTag, int pFrom, int pTo, int pResponseToId) {
-			super(pTag);
+			super(pTag, 2);
 			
 			from = pFrom;
 			to = pTo;
@@ -194,7 +197,12 @@ public class RARA {
 		@Override
 		public Message clone() {
 			return new SumRequest(this.getTag(), this.from, this.to, this.responseToId);
-		}	
+		}
+
+		@Override
+		public void append(ExcerptAppender appender) {
+			// TODO
+		}
 	}
 	
 	/**
@@ -204,13 +212,18 @@ public class RARA {
 		public int result;
 		
 		protected SumResponse(int pTag, int pResult) {
-			super(pTag);
+			super(pTag, 3);
 			result = pResult;
 		}
 
 		@Override
 		public Message clone() {
 			return new SumResponse(this.getTag(), this.result);
+		}
+
+		@Override
+		public void append(ExcerptAppender appender) {
+			// TODO
 		}
 	}
 	
@@ -223,7 +236,7 @@ public class RARA {
 		public boolean isOk;
 
 		protected SumAck(int pTag, boolean pIsOk) {
-			super(pTag);
+			super(pTag, 4);
 			
 			isOk = pIsOk;
 		}
@@ -232,7 +245,11 @@ public class RARA {
 		public Message clone() {
 			return new SumAck(this.getTag(), this.isOk);
 		}
-		
+
+		@Override
+		public void append(ExcerptAppender appender) {
+			// TODO
+		}	
 	}
 
 }

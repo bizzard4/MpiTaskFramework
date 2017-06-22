@@ -1,10 +1,15 @@
 package com.mpitaskframework.TaskSystem;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import net.openhft.chronicle.queue.ChronicleQueue;
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
 
 /**
  * System class is a central point where message queues are kept. Every method can be call from any task, this
@@ -25,6 +30,11 @@ public class TaskSystem implements Runnable {
 	public static final String SYSTEM_SHARED_PATH = "/tmp/TS_SYSTEM";
 	
 	/**
+	 * Prefix for task specific shared queue path.
+	 */
+	public static final String TASK_SHARED_PATH_PREFIX = "/tmp/TS_";
+	
+	/**
 	 * Reference to wait and signal thread. Will be null if this process is not
 	 * the system creator.
 	 */
@@ -35,12 +45,11 @@ public class TaskSystem implements Runnable {
 	 */
 	private SharedSystemData m_sharedData;
 	
-	/**
-	 * We use a concurrent queue. The best would be to have a lock-free queue.
-	 * Current maximum is 1000, but this system could be extended to a more generic one.
-	 */
-	@SuppressWarnings("unchecked")
-	private ConcurrentLinkedQueue<Message>[] m_queues = new ConcurrentLinkedQueue[MAX_TASK_COUNT];
+	// For writting
+	private ExcerptAppender[] appenders = new ExcerptAppender[MAX_TASK_COUNT];
+	
+	// For reading
+	private ExcerptTailer[] readers = new ExcerptTailer[MAX_TASK_COUNT];
 	
 	/**
 	 * Wait and signal condition and lock.
@@ -77,7 +86,13 @@ public class TaskSystem implements Runnable {
 				System.exit(-1);
 			}
 		} else {
-			instance.acquireSystem();
+			try {
+				instance.acquireSystem();
+			} catch (IOException e) {
+				System.err.println("Error, " + e.getMessage());
+				e.printStackTrace();
+				System.exit(-1);
+			}
 		}
 	}
 	
@@ -123,9 +138,11 @@ public class TaskSystem implements Runnable {
 	
 	/**
 	 * Acquire an existing instance of the system from the shared space.
+	 * @throws IOException 
 	 */
-	private void acquireSystem() {
-		
+	private void acquireSystem() throws IOException {
+		// Create and initialize shared data
+		m_sharedData = new SharedSystemData(SYSTEM_SHARED_PATH, false);
 	}
 	
 	/**
@@ -149,13 +166,15 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void send(Message pMsg, int pTaskId) {
-		Message clone = pMsg.clone();
-		
-		if (m_queues[pTaskId] == null) {
-			// Need to acquire
+		if (appenders[pTaskId] == null) {
+			// Acquire the Q
+			try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(getTaskQPath(pTaskId)).build()) {
+				appenders[pTaskId] = queue.acquireAppender();
+			}
 		}
 		
-		m_queues[pTaskId].offer(clone);
+		// Write message
+		pMsg.append(appenders[pTaskId]);
 	}
 	
 	/**
@@ -164,7 +183,10 @@ public class TaskSystem implements Runnable {
 	 * @return
 	 */
 	public Message receive(int pTaskId) {
-		return m_queues[pTaskId].poll();
+		// TODO : Receive mapping
+		MessageBuilder b = new MessageBuilder();
+		readers[pTaskId].readDocument( w -> w.read("message").marshallable(b));
+		return b.result;
 	}
 	
 	/**
@@ -173,12 +195,7 @@ public class TaskSystem implements Runnable {
 	 * @return
 	 */
 	public int getMessageTag(int pTaskId) {
-		Message head = m_queues[pTaskId].peek();
-		if (head==null) {
-			return -1;
-		}
-		
-		return head.getTag();
+		return -1;
 	}
 	
 	/**
@@ -186,15 +203,23 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void dropMessage(int pTaskId) {
-		m_queues[pTaskId].poll();
+		// TODO : Drop the message
+		//m_queues[pTaskId].poll();
 	}
 	
 	/**
-	 * Create a new queue for a task id.
+	 * Create a new shared queue for a task id.
 	 * @param pTaskId
 	 */
 	public void createMessageQueue(int pTaskId) {
-		m_queues[pTaskId] = new ConcurrentLinkedQueue<>();
+		File f = new File(getTaskQPath(pTaskId));
+		if (f.exists()) {
+			System.err.println("BUG : Chronicle directory exist : " + f.getAbsolutePath());
+			System.exit(-1);
+		}
+		try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(getTaskQPath(pTaskId)).build()) {
+			readers[pTaskId] = queue.createTailer();
+		}
 	}
 	
 	/**
@@ -211,7 +236,8 @@ public class TaskSystem implements Runnable {
 	 * @return
 	 */
 	public boolean message_immediate(int pTaskId) {
-		return m_queues[pTaskId].isEmpty();
+		//return m_queues[pTaskId].isEmpty();
+		return false;
 	}
 	
 	/**
@@ -220,14 +246,14 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void message_notify(int pTaskId) {
-		if (message_immediate(pTaskId)) {
-			try {
-				sleepers[pTaskId].await();
-			} catch (InterruptedException e) {
-				System.err.println("Condition variable failed to await");
-				e.printStackTrace();
-			}
-		}
+		//if (message_immediate(pTaskId)) {
+		//	try {
+		//		sleepers[pTaskId].await();
+		//	} catch (InterruptedException e) {
+		//		System.err.println("Condition variable failed to await");
+		//		e.printStackTrace();
+		//	}
+		//}
 	}
 	
 	/**
@@ -235,7 +261,17 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void message_wait(int pTaskId) {
-		Thread.yield();
+		//Thread.yield();
+	}
+	
+	/**
+	 * Build the path to a specific task queue.
+	 * Format : /tmp/TS_<TASK_ID>
+	 * @param pTaskId
+	 * @return
+	 */
+	private String getTaskQPath(int pTaskId) {
+		return new String(TASK_SHARED_PATH_PREFIX + pTaskId);
 	}
 
 	/**
@@ -251,14 +287,15 @@ public class TaskSystem implements Runnable {
 			int current_max_id = m_sharedData.getNextTaskId();
 			
 			for (int i = 0; i < current_max_id; i++) {
-				if ((m_queues[i] != null) && (!m_queues[i].isEmpty())) {
-					sleeper_lock.lock();
-					try {
-						this.sleepers[i].signal();
-					} finally {
-						sleeper_lock.unlock();
-					}
-				}
+				// TODO : FIX using chronicle
+//				if ((m_queues[i] != null) && (!m_queues[i].isEmpty())) {
+//					sleeper_lock.lock();
+//					try {
+//						this.sleepers[i].signal();
+//					} finally {
+//						sleeper_lock.unlock();
+//					}
+//				}
 			}
 			
 			try {

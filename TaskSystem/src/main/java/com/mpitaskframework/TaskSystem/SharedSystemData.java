@@ -39,15 +39,25 @@ public class SharedSystemData implements Serializable {
 	 */
 	public SharedSystemData(String path, boolean create) throws IOException {
 		File f = new File(path);
-		if (f.exists()) {
-			System.out.println("Existing system detected, deleting");
-			f.delete(); // Delete if present.
+		
+		if (create) {
+			if (f.exists()) {
+				System.out.println("Existing system detected, deleting");
+				f.delete(); // Delete if present.
+			}
+		} else {
+			if (!f.exists()) {
+				System.err.println("ERROR, system dont exist");
+				System.exit(-1);
+			}
 		}
 		channel = FileChannel.open(f.toPath(), StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 		buffer = channel.map(MapMode.READ_WRITE, 0, 4000);
 		
-		setNextTaskId(0);
-		setShutdownSignal(false);
+		if (create) {
+			setNextTaskId(0);
+			setShutdownSignal(false);
+		}
 	}
 	
 	@Override

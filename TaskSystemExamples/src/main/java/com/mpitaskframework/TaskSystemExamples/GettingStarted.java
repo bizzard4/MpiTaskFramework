@@ -37,7 +37,7 @@ public class GettingStarted {
 			
 			// Send an this task id as message
 			IntMessage msg = new IntMessage(0, this.getTaskId());
-			TaskSystem.getInstance().send(msg, b_id);
+			send(msg, b_id);
 			
 			// Get response
 			receive();
@@ -51,19 +51,13 @@ public class GettingStarted {
 		public void receive() {
 			// Loop until we get a new message. This is equivalent to a blocking call. Later this task
 			// could be put to sleep until a new message arrive.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (msg.getTag()) {
 			case 0: // Tag can be a enumeration
 				IntMessage realMsg = (IntMessage)msg;
 				System.out.println("Task A got the int back from B (" + realMsg.value + ")");
 				default:
-					
 			}
 		}
 	}
@@ -98,12 +92,7 @@ public class GettingStarted {
 		public void receive() {
 			// Loop until we get a new message. This is equivalent to a blocking call. Later this task
 			// could be put to sleep until a new message arrive.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (msg.getTag()) {
 			case 0:
@@ -130,7 +119,7 @@ public class GettingStarted {
 		Task.createTask(sample.new A());
 		
 		// 1s sleep until everything is done.
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 		
 		TaskSystem.getInstance().destroy();
 	}

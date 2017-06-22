@@ -2,6 +2,9 @@ package com.mpitaskframework.TaskSystem.Messages;
 
 import com.mpitaskframework.TaskSystem.Message;
 
+import net.openhft.chronicle.queue.ExcerptAppender;
+import net.openhft.chronicle.queue.ExcerptTailer;
+
 /**
  * A simple notify message with a success variable.
  * @author François Gingras <bizzard4>
@@ -10,15 +13,17 @@ import com.mpitaskframework.TaskSystem.Message;
 public class NotifyMessage extends Message {
 	
 	public boolean success;
+	
+	public static final int NOTIFYMESSAGE_TID = 2;
 
 	protected NotifyMessage(int pTag, boolean pSuccess) {
-		super(pTag);
+		super(pTag, NOTIFYMESSAGE_TID);
 		success = pSuccess;
 	}
 
 	@Override
-	public Message clone() {
-		return new NotifyMessage(this.getTag(), this.success);
+	public void append(ExcerptAppender appender) {
+		// TODO Auto-generated method stub
+		
 	}
-
 }
