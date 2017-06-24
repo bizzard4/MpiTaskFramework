@@ -4,8 +4,7 @@ import com.mpitaskframework.TaskSystem.Message;
 import com.mpitaskframework.TaskSystem.Task;
 import com.mpitaskframework.TaskSystem.TaskSystem;
 
-import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
+import io.mappedbus.MemoryMappedFile;
 
 /**
  * Request Ack Response Ack is a common message format.
@@ -200,8 +199,15 @@ public class RARA {
 		}
 
 		@Override
-		public void append(ExcerptAppender appender) {
-			// TODO
+		public void write(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void read(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 	
@@ -222,8 +228,15 @@ public class RARA {
 		}
 
 		@Override
-		public void append(ExcerptAppender appender) {
-			// TODO
+		public void write(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void read(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 	
@@ -247,9 +260,16 @@ public class RARA {
 		}
 
 		@Override
-		public void append(ExcerptAppender appender) {
-			// TODO
-		}	
+		public void write(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void read(MemoryMappedFile mem, long pos) {
+			// TODO Auto-generated method stub
+			
+		}
 	}
 
 }

@@ -1,15 +1,16 @@
 package com.mpitaskframework.TaskSystem;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import net.openhft.chronicle.queue.ChronicleQueue;
-import net.openhft.chronicle.queue.ExcerptAppender;
-import net.openhft.chronicle.queue.ExcerptTailer;
-import net.openhft.chronicle.queue.impl.single.SingleChronicleQueueBuilder;
+import com.mpitaskframework.TaskSystem.Messages.IntMessage;
+
+import io.mappedbus.MappedBusReader;
+import io.mappedbus.MappedBusWriter;
 
 /**
  * System class is a central point where message queues are kept. Every method can be call from any task, this
@@ -46,10 +47,10 @@ public class TaskSystem implements Runnable {
 	private SharedSystemData m_sharedData;
 	
 	// For writting
-	private ExcerptAppender[] appenders = new ExcerptAppender[MAX_TASK_COUNT];
+	private MappedBusWriter[] writers = new MappedBusWriter[MAX_TASK_COUNT];
 	
 	// For reading
-	private ExcerptTailer[] readers = new ExcerptTailer[MAX_TASK_COUNT];
+	private MappedBusReader[] readers = new MappedBusReader[MAX_TASK_COUNT];
 	
 	/**
 	 * Wait and signal condition and lock.
@@ -131,6 +132,12 @@ public class TaskSystem implements Runnable {
 		// Create and initialize shared data
 		m_sharedData = new SharedSystemData(SYSTEM_SHARED_PATH, true);
 		
+		// Initialize all readers and writers to null
+		for (int i = 0; i < MAX_TASK_COUNT; i++) {
+			readers[i] = null;
+			writers[i] = null;
+		}
+		
 		// Start he wait and signal loop
 		m_threadRef = new Thread(this);
 		m_threadRef.start();
@@ -143,6 +150,12 @@ public class TaskSystem implements Runnable {
 	private void acquireSystem() throws IOException {
 		// Create and initialize shared data
 		m_sharedData = new SharedSystemData(SYSTEM_SHARED_PATH, false);
+		
+		// Initialize all readers and writers to null
+		for (int i = 0; i < MAX_TASK_COUNT; i++) {
+			readers[i] = null;
+			writers[i] = null;
+		}
 	}
 	
 	/**
@@ -166,27 +179,51 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void send(Message pMsg, int pTaskId) {
-		if (appenders[pTaskId] == null) {
+		try {
+		if (writers[pTaskId] == null) {
 			// Acquire the Q
-			try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(getTaskQPath(pTaskId)).build()) {
-				appenders[pTaskId] = queue.acquireAppender();
-			}
+			writers[pTaskId] = new MappedBusWriter(getTaskQPath(pTaskId), 100000L, 8, true);
+			writers[pTaskId].open();
+		}
+		} catch (IOException ex) {
+			System.err.println("Failed to acquire Q : " + ex.getMessage());
+			return;
 		}
 		
 		// Write message
-		pMsg.append(appenders[pTaskId]);
+		try {
+			writers[pTaskId].write(pMsg);
+		} catch (EOFException e) {
+			System.err.println("Failed to write in Q : " + e.getMessage());
+		}
 	}
 	
 	/**
 	 * Get the message from a task queue.
 	 * @param pTaskId
 	 * @return
+	 * @throws  
 	 */
-	public Message receive(int pTaskId) {
+	public Message receive(int pTaskId) {	
 		// TODO : Receive mapping
-		MessageBuilder b = new MessageBuilder();
-		readers[pTaskId].readDocument( w -> w.read("message").marshallable(b));
-		return b.result;
+		try {
+			if (readers[pTaskId].next()) {
+				int type = readers[pTaskId].readType();
+				
+				// Mapping
+				Message msg = null;
+				if (type == IntMessage.INTMESSAGE_TID) {
+					msg = new IntMessage();
+					readers[pTaskId].readMessage(msg);
+				}
+				
+				return msg;
+			}
+		} catch (EOFException e) {
+			System.err.println("EOF error : " + e.getMessage());
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -214,11 +251,15 @@ public class TaskSystem implements Runnable {
 	public void createMessageQueue(int pTaskId) {
 		File f = new File(getTaskQPath(pTaskId));
 		if (f.exists()) {
-			System.err.println("BUG : Chronicle directory exist : " + f.getAbsolutePath());
-			System.exit(-1);
+			f.delete();
 		}
-		try (ChronicleQueue queue = SingleChronicleQueueBuilder.binary(getTaskQPath(pTaskId)).build()) {
-			readers[pTaskId] = queue.createTailer();
+		
+		try {
+			readers[pTaskId] = new MappedBusReader(getTaskQPath(pTaskId), 100000L, 8);
+			readers[pTaskId].open();
+		} catch (IOException e) {
+			System.err.println("Error creating the task Q : " + e.getMessage());
+			System.exit(-1);
 		}
 	}
 	

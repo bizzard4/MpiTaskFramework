@@ -68,9 +68,9 @@ public class SharedSystemData implements Serializable {
 	/**
 	 * Acquire file lock and set next task id.
 	 */
-	public void setNextTaskId(int pNextTaskId) {
+	public synchronized void setNextTaskId(int pNextTaskId) {
 		try {
-			FileLock l = channel.lock(0, Integer.BYTES, false);
+			FileLock l = channel.lock();
 			buffer.position(0);
 			buffer.putInt(pNextTaskId);
 			l.release();
@@ -80,10 +80,10 @@ public class SharedSystemData implements Serializable {
 		}
 	}
 	
-	public int incrementNextTaskId() {
+	public synchronized int incrementNextTaskId() {
 		int toRet = -1;
 		try {
-			FileLock l = channel.lock(0, Integer.BYTES, false);
+			FileLock l = channel.lock();
 			buffer.position(0);
 			int current = buffer.getInt();
 			buffer.position(0);
@@ -103,10 +103,10 @@ public class SharedSystemData implements Serializable {
 	 * Acquire file lock and get next task id.
 	 * @return
 	 */
-	public int getNextTaskId() {
+	public synchronized int getNextTaskId() {
 		int toRet = -1;
 		try {
-			FileLock l = channel.lock(0, Integer.BYTES, false);
+			FileLock l = channel.lock();
 			buffer.position(0);
 			toRet = buffer.getInt();
 			l.release();
@@ -118,9 +118,9 @@ public class SharedSystemData implements Serializable {
 		return toRet;
 	}
 	
-	public void setShutdownSignal(boolean pShutdownSignal) {
+	public synchronized void setShutdownSignal(boolean pShutdownSignal) {
 		try {
-			FileLock l = channel.lock(Integer.BYTES, Integer.BYTES, false);
+			FileLock l = channel.lock();
 			buffer.position(Integer.BYTES);
 			buffer.putInt(pShutdownSignal ? 1 : 0);
 			l.release();

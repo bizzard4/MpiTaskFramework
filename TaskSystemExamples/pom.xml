@@ -23,10 +23,5 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-    	<groupId>net.openhft</groupId>
-    	<artifactId>chronicle-queue</artifactId>
-    	<version>4.5.27</version>
-    </dependency>
   </dependencies>
 </project>
