@@ -200,14 +200,19 @@ public class RARA {
 
 		@Override
 		public void write(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			mem.putInt(pos, this.getTag());
+			mem.putInt(pos + 4, from);
+			mem.putInt(pos + 8, to);
+			mem.putInt(pos + 12, responseToId);
 		}
 
 		@Override
 		public void read(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			setTid(2);
+			setTag(mem.getInt(pos));
+			from = mem.getInt(pos + 4);
+			to = mem.getInt(pos + 8);
+			responseToId = mem.getInt(pos + 12);
 		}
 	}
 	
@@ -229,14 +234,15 @@ public class RARA {
 
 		@Override
 		public void write(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			mem.putInt(pos, this.getTag());
+			mem.putInt(pos + 4, result);
 		}
 
 		@Override
 		public void read(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			setTid(3);
+			setTag(mem.getInt(pos));
+			result = mem.getInt(pos + 4);
 		}
 	}
 	
@@ -261,14 +267,15 @@ public class RARA {
 
 		@Override
 		public void write(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			mem.putInt(pos, this.getTag());
+			mem.putInt(pos + 4, isOk ? 1 : 0);
 		}
 
 		@Override
 		public void read(MemoryMappedFile mem, long pos) {
-			// TODO Auto-generated method stub
-			
+			setTid(4);
+			setTag(mem.getInt(pos));
+			isOk = mem.getInt(pos + 4) == 1 ? true : false;
 		}
 	}
 
