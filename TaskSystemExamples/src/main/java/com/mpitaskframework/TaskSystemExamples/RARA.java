@@ -85,12 +85,7 @@ public class RARA {
 		@Override
 		public void receive() {
 			// Loop until we get a new message.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (RARAMessages.values()[msg.getTag()]) {
 			case REQ_ACK_TAG:
@@ -147,12 +142,7 @@ public class RARA {
 		@Override
 		public void receive() {
 			// Loop until we get a new message.
-			int tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			while (tag == -1) {
-				tag = TaskSystem.getInstance().getMessageTag(this.getTaskId());
-			}
-			
-			Message msg = TaskSystem.getInstance().receive(this.getTaskId());
+			Message msg = this.getNextMessage();
 			
 			switch (RARAMessages.values()[msg.getTag()]) {
 			case REQ_TAG:

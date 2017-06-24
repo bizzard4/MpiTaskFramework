@@ -46,10 +46,14 @@ public class TaskSystem implements Runnable {
 	 */
 	private SharedSystemData m_sharedData;
 	
-	// For writting
+	/**
+	 * Writers for each task. Writer are acquired when doing the first send.
+	 */
 	private MappedBusWriter[] writers = new MappedBusWriter[MAX_TASK_COUNT];
 	
-	// For reading
+	/**
+	 * Readers for each task. Reader are created when the task is created.
+	 */
 	private MappedBusReader[] readers = new MappedBusReader[MAX_TASK_COUNT];
 	
 	/**
@@ -205,7 +209,6 @@ public class TaskSystem implements Runnable {
 	 * @throws  
 	 */
 	public Message receive(int pTaskId) {	
-		// TODO : Receive mapping
 		try {
 			if (readers[pTaskId].next()) {
 				int type = readers[pTaskId].readType();
@@ -224,24 +227,6 @@ public class TaskSystem implements Runnable {
 		}
 		
 		return null;
-	}
-	
-	/**
-	 * Retreive message tag if available.
-	 * @param pTaskId
-	 * @return
-	 */
-	public int getMessageTag(int pTaskId) {
-		return -1;
-	}
-	
-	/**
-	 * Drop the message.
-	 * @param pTaskId
-	 */
-	public void dropMessage(int pTaskId) {
-		// TODO : Drop the message
-		//m_queues[pTaskId].poll();
 	}
 	
 	/**
@@ -277,7 +262,13 @@ public class TaskSystem implements Runnable {
 	 * @return
 	 */
 	public boolean message_immediate(int pTaskId) {
-		//return m_queues[pTaskId].isEmpty();
+		try {
+			return !readers[pTaskId].next();
+		} catch (EOFException e) {
+			System.err.println("message_immediate error : " + e.getMessage());
+			e.printStackTrace();
+		}
+		
 		return false;
 	}
 	
@@ -287,14 +278,14 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void message_notify(int pTaskId) {
-		//if (message_immediate(pTaskId)) {
-		//	try {
-		//		sleepers[pTaskId].await();
-		//	} catch (InterruptedException e) {
-		//		System.err.println("Condition variable failed to await");
-		//		e.printStackTrace();
-		//	}
-		//}
+		if (message_immediate(pTaskId)) {
+			try {
+				sleepers[pTaskId].await();
+			} catch (InterruptedException e) {
+				System.err.println("Condition variable failed to await");
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
@@ -302,7 +293,7 @@ public class TaskSystem implements Runnable {
 	 * @param pTaskId
 	 */
 	public void message_wait(int pTaskId) {
-		//Thread.yield();
+		Thread.yield();
 	}
 	
 	/**
@@ -328,15 +319,14 @@ public class TaskSystem implements Runnable {
 			int current_max_id = m_sharedData.getNextTaskId();
 			
 			for (int i = 0; i < current_max_id; i++) {
-				// TODO : FIX using chronicle
-//				if ((m_queues[i] != null) && (!m_queues[i].isEmpty())) {
-//					sleeper_lock.lock();
-//					try {
-//						this.sleepers[i].signal();
-//					} finally {
-//						sleeper_lock.unlock();
-//					}
-//				}
+				if ((readers[i] != null) && (!message_immediate(i))) {
+					sleeper_lock.lock();
+					try {
+						this.sleepers[i].signal();
+					} finally {
+						sleeper_lock.unlock();
+					}
+				}
 			}
 			
 			try {
